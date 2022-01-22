@@ -1,5 +1,7 @@
+import hashlib
 import os
 import sqlite3
+import uuid
 
 
 class User:
@@ -15,7 +17,7 @@ def database_setup():
     cursor.execute(f"CREATE TABLE Users (  "
                     "id INT PRIMARY KEY,   "
                     "username VARCHAR(32), "
-                    "password VARCHAR(32) )")
+                    "password TEXT )")
     database.commit()
     database.close()
 
@@ -77,9 +79,19 @@ def database_delete(username):
     database.close()
 
 
+def hash_password(password):
+    salt = uuid.uuid4().hex
+    return hashlib.sha256(salt.encode() + password.encode()).hexdigest() + ":" + salt
+
+
+def check_password(hashed_password, user_password):
+    password, salt = hashed_password.split(':')
+    return password == hashlib.sha256(salt.encode() + user_password.encode()).hexdigest()
+
+
 def login(username, password):
     for user in registered_users:
-        if user[1] == username and user[2] == password:
+        if user[1] == username and check_password(user[2], password):
             print("Login successful!\n")
             return True
 
@@ -90,26 +102,23 @@ def login(username, password):
 def register(username, password):
     if len(registered_users):
         for user in registered_users:
-            if user.username == username:
+            if user[1] == username:
                 print(f"{username} already exists!\n")
                 return False
 
-    registered_users.append(User(username, password))
+    new_user = (registered_users[-1][0] +1, username, password)
+    registered_users.append(new_user)
     database_push(username, password)
-    print(f"User {username} has been successfully registered!\n")
+    print(f"User '{username}' has been successfully registered!\n")
     return True
 
 
 def reveal_users():
     i = 1
     for user in registered_users:
-        print(f"User {i}")
-        print(f"- {user[1]}")
-        print(f"- ", end="")
-        for j in range(len(user[2])):
-            print("*", end="")
-        print("\n")
+        print(f"{i}. {user[1]}")    # Example: '1. Frank Klepacki'
         i += 1
+    print("")
 
 
 def delete_user(username):
@@ -153,7 +162,7 @@ while not logged_in:
         print("   Register   ")
         print("==============")
         username = input("New username: ")
-        password = input("New password: ")
+        password = hash_password(input("New password: "))
         register(username, password)
 
     elif nav == "3":
