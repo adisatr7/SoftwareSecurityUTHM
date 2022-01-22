@@ -12,7 +12,7 @@ def database_setup():
     print(f"Creating table addresses...")
     database = sqlite3.connect("sofsec_demo.db")
     cursor = database.cursor()
-    cursor.execute(f"CREATE TABLE Users ( "
+    cursor.execute(f"CREATE TABLE Users (  "
                     "id INT PRIMARY KEY,   "
                     "username VARCHAR(32), "
                     "password VARCHAR(32) )")
@@ -35,8 +35,7 @@ def database_push(username, password):
                    ":password)", {
                        "id": len(registered_users) + 1,
                        "username": username,
-                       "password": password
-                   })
+                       "password": password})
 
     database.commit()
     database.close()
